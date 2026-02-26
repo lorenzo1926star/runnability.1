@@ -1,0 +1,9 @@
+﻿{
+  "name": "RunTrack Pro",
+  "short_name": "RunTrack",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#1e293b",
+  "icons": []
+}

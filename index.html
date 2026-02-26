@@ -1,0 +1,54 @@
+﻿<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RunTrack Pro</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+</head>
+<body>
+
+<header>
+  <h1>🏃 RunTrack Pro</h1>
+</header>
+
+<nav>
+  <button onclick="showSection('dashboard')">Dashboard</button>
+  <button onclick="showSection('map')">Allenamento</button>
+  <button onclick="showSection('history')">Storico</button>
+  <button onclick="showSection('planner')">Planner</button>
+</nav>
+
+<section id="dashboard" class="active">
+  <h2>Meteo Live</h2>
+  <div id="weather"></div>
+</section>
+
+<section id="map">
+  <div id="mapid"></div>
+  <div class="controls">
+    <button onclick="startRun()">▶ Inizia</button>
+    <button onclick="stopRun()">⏹ Stop</button>
+  </div>
+  <div id="stats"></div>
+</section>
+
+<section id="history">
+  <h2>Storico Allenamenti</h2>
+  <div id="historyList"></div>
+</section>
+
+<section id="planner">
+  <h2>Pianifica Settimana</h2>
+  <div id="plannerUI"></div>
+</section>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
