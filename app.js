@@ -389,3 +389,199 @@ rows.appendChild(tr)
 }
 
 }
+
+function showSection(id){
+
+document.querySelectorAll(".screen").forEach(s=>{
+s.classList.remove("active")
+})
+
+document.getElementById(id).classList.add("active")
+
+}
+
+
+/* =======================
+   METEO PRO
+======================= */
+
+const cityInput=document.getElementById("city")
+const btnCity=document.getElementById("btnCity")
+const btnGeo=document.getElementById("btnGeo")
+const statusBox=document.getElementById("status")
+const bestBox=document.getElementById("best")
+const rowsBox=document.getElementById("rows")
+const prefSelect=document.getElementById("pref")
+
+
+function setStatus(msg){
+if(statusBox) statusBox.innerText=msg
+}
+
+
+function scoreWeather(temp,rain,wind){
+
+let score=100
+
+if(temp<5) score-=30
+if(temp>28) score-=30
+
+score-=rain*15
+score-=wind*1.5
+
+if(score<0) score=0
+
+return Math.round(score)
+
+}
+
+
+function scoreClass(score){
+
+if(score>80) return "score ok"
+if(score>60) return "score warn"
+return "score bad"
+
+}
+
+
+async function searchCity(){
+
+const city=cityInput.value
+
+if(!city){
+setStatus("Inserisci una città")
+return
+}
+
+setStatus("Cerco città...")
+
+try{
+
+const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&language=it&format=json`)
+
+const j=await r.json()
+
+if(!j.results){
+setStatus("Città non trovata")
+return
+}
+
+const lat=j.results[0].latitude
+const lon=j.results[0].longitude
+
+setStatus("Carico meteo...")
+
+loadWeather(lat,lon)
+
+}catch(e){
+
+setStatus("Errore ricerca città")
+
+}
+
+}
+
+
+async function loadWeather(lat,lon){
+
+try{
+
+const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,windspeed_10m&forecast_days=7&timezone=auto`
+
+const r=await fetch(url)
+
+const data=await r.json()
+
+rowsBox.innerHTML=""
+bestBox.innerHTML=""
+
+const temps=data.hourly.temperature_2m
+const rains=data.hourly.precipitation
+const winds=data.hourly.windspeed_10m
+const times=data.hourly.time
+
+let windows=[]
+
+for(let i=0;i<24;i++){
+
+const temp=temps[i]
+const rain=rains[i]
+const wind=winds[i]
+
+const score=scoreWeather(temp,rain,wind)
+
+windows.push({
+time:times[i],
+score,
+temp,
+rain,
+wind
+})
+
+const tr=document.createElement("tr")
+
+tr.innerHTML=`
+
+<td>${times[i].substring(11,16)}</td>
+<td class="${scoreClass(score)}">${score}</td>
+<td>${temp}°C</td>
+<td>${rain} mm</td>
+<td>${wind} km/h</td>
+
+`
+
+rowsBox.appendChild(tr)
+
+}
+
+
+windows.sort((a,b)=>b.score-a.score)
+
+for(let i=0;i<3;i++){
+
+const w=windows[i]
+
+const div=document.createElement("div")
+
+div.className="card"
+
+div.innerHTML=`
+
+<strong>${i+1}) ${w.time.substring(11,16)}</strong><br>
+
+Temp ${w.temp}°C |
+Pioggia ${w.rain} mm |
+Vento ${w.wind} km/h
+
+<div class="${scoreClass(w.score)}">${w.score}</div>
+
+`
+
+bestBox.appendChild(div)
+
+}
+
+setStatus("Previsioni aggiornate")
+
+}catch(e){
+
+setStatus("Errore caricamento meteo")
+
+}
+
+}
+
+
+btnCity?.addEventListener("click",searchCity)
+
+
+btnGeo?.addEventListener("click",()=>{
+
+navigator.geolocation.getCurrentPosition(pos=>{
+
+loadWeather(pos.coords.latitude,pos.coords.longitude)
+
+})
+
+})
