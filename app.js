@@ -10,14 +10,35 @@ let viewingRun = null; // run selezionato dallo storico
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
 .addTo(map);
 
-function showSection(id){
-  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
+function showSection(id) {
 
-  // Fix Leaflet quando la mappa era nascosta
-  if (id === "map") {
-    setTimeout(() => map.invalidateSize(), 200);
-  }
+const screens=document.querySelectorAll(".screen")
+const navItems=document.querySelectorAll(".nav-item")
+const target=document.getElementById(id)
+
+screens.forEach(screen=>{
+screen.classList.remove("active")
+})
+
+target.classList.add("active")
+
+navItems.forEach(btn=>{
+btn.classList.remove("active")
+
+if(btn.dataset.target===id){
+btn.classList.add("active")
+}
+
+})
+
+if(id==="map" && typeof map!=="undefined"){
+
+setTimeout(()=>{
+map.invalidateSize()
+},200)
+
+}
+
 }
 
 function startRun(){
@@ -583,5 +604,11 @@ navigator.geolocation.getCurrentPosition(pos=>{
 loadWeather(pos.coords.latitude,pos.coords.longitude)
 
 })
+
+})
+
+document.addEventListener("DOMContentLoaded",function(){
+
+showSection("dashboard")
 
 })
