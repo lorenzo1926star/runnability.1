@@ -1,75 +1,39 @@
-﻿/* =================================================
-RUNTRACK PRO — APP.JS COMPLETO (SOSTITUISCI TUTTO)
-================================================= */
+﻿
+/* SOSTITUISCI COMPLETAMENTE TUTTO IL CONTENUTO DI app.js CON QUESTO */
 
-/* -------- UTILS -------- */
-function $(id){ return document.getElementById(id); }
+function showSection(id) {
 
-function clamp(v,min,max){ return Math.max(min,Math.min(max,v)); }
-
-function formatTime(sec){
-sec=Math.floor(sec||0)
-const h=Math.floor(sec/3600)
-const m=Math.floor((sec%3600)/60)
-const s=sec%60
-if(h>0){return h+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")}
-return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")
-}
-
-function pace(distance,sec){
-if(!distance||!sec)return "-"
-const min=(sec/60)/distance
-const mm=Math.floor(min)
-const ss=Math.round((min-mm)*60)
-return mm+":"+String(ss).padStart(2,"0")+" min/km"
-}
-
-function speed(distance,sec){
-if(!distance||!sec)return "0"
-return (distance/(sec/3600)).toFixed(1)
-}
-
-/* -------- NAVIGATION -------- */
-function showSection(id){
-
-document.querySelectorAll(".screen").forEach(s=>{
-s.classList.remove("active")
+document.querySelectorAll(".screen").forEach(function(s){
+s.style.display="none"
 })
 
-const target=$(id)
-if(target){target.classList.add("active")}
+var target=document.getElementById(id)
 
-document.querySelectorAll(".nav-item").forEach(btn=>{
-btn.classList.remove("active")
-if(btn.dataset.target===id){btn.classList.add("active")}
-})
-
-if(id==="map" && window.map){
-setTimeout(()=>{map.invalidateSize()},200)
+if(target){
+target.style.display="block"
 }
 
 }
 
-/* -------- MAP -------- */
-let map=null
-let polyline=null
-let route=[]
-let watchId=null
-let timer=null
-let elapsed=0
+/* ---------- MAPPA ---------- */
+
+var map
+var polyline
+var route=[]
+var watchId=null
+var timer=null
+var elapsed=0
 
 function initMap(){
 
-if(!$("mapid"))return
-if(typeof L==="undefined")return
+if(!document.getElementById("mapid")) return
+if(typeof L==="undefined") return
 
 map=L.map("mapid").setView([41.9,12.49],13)
-window.map=map
 
-L.tileLayer(
-"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-{attribution:"OpenStreetMap"}
-).addTo(map)
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+attribution:"OpenStreetMap"
+}).addTo(map)
 
 polyline=L.polyline([],{
 color:"red",
@@ -78,62 +42,28 @@ weight:4
 
 }
 
-function distance(){
-
-if(route.length<2)return 0
-
-let d=0
-for(let i=1;i<route.length;i++){
-d+=map.distance(route[i-1],route[i])
-}
-
-return d/1000
-}
-
-function updateStats(){
-
-if(!$("stats"))return
-
-const km=distance()
-const kcal=Math.round(km*60)
-
-$("stats").innerHTML=`
-
-<div class="card">
-
-Km ${km.toFixed(2)}<br>
-Tempo ${formatTime(elapsed)}<br>
-Passo ${pace(km,elapsed)}<br>
-Velocità ${speed(km,elapsed)} km/h<br>
-Kcal ${kcal}
-
-</div>
-
-`
-
-}
-
 function startRun(){
 
-if(!navigator.geolocation)return
+if(!navigator.geolocation) return
 
 route=[]
 polyline.setLatLngs(route)
 elapsed=0
 
-timer=setInterval(()=>{
+timer=setInterval(function(){
 elapsed++
 updateStats()
 },1000)
 
-watchId=navigator.geolocation.watchPosition(pos=>{
+watchId=navigator.geolocation.watchPosition(function(pos){
 
-const lat=pos.coords.latitude
-const lon=pos.coords.longitude
+var lat=pos.coords.latitude
+var lon=pos.coords.longitude
 
-const point=[lat,lon]
+var point=[lat,lon]
 
 route.push(point)
+
 polyline.setLatLngs(route)
 
 map.setView(point,16)
@@ -157,18 +87,41 @@ saveRun()
 
 }
 
+function distance(){
+
+if(route.length<2) return 0
+
+var d=0
+
+for(var i=1;i<route.length;i++){
+d+=map.distance(route[i-1],route[i])
+}
+
+return d/1000
+
+}
+
+function updateStats(){
+
+var stats=document.getElementById("stats")
+if(!stats) return
+
+var km=distance()
+
+stats.innerHTML="Km "+km.toFixed(2)+"<br>Tempo "+elapsed+" sec"
+
+}
+
 function saveRun(){
 
-if(route.length<2)return
+if(route.length<2) return
 
-const runs=JSON.parse(localStorage.getItem("runs")||"[]")
+var runs=JSON.parse(localStorage.getItem("runs")||"[]")
 
 runs.unshift({
-
 date:new Date().toISOString(),
 distance:distance(),
 time:elapsed
-
 })
 
 localStorage.setItem("runs",JSON.stringify(runs))
@@ -177,29 +130,26 @@ renderHistory()
 
 }
 
-/* -------- HISTORY -------- */
+/* ---------- STORICO ---------- */
 
 function renderHistory(){
 
-const list=$("historyList")
-if(!list)return
+var list=document.getElementById("historyList")
+if(!list) return
 
-const runs=JSON.parse(localStorage.getItem("runs")||"[]")
+var runs=JSON.parse(localStorage.getItem("runs")||"[]")
 
 list.innerHTML=""
 
-runs.forEach(r=>{
+runs.forEach(function(r){
 
-const div=document.createElement("div")
-div.className="card"
+var div=document.createElement("div")
 
-div.innerHTML=`
+div.innerHTML=
 
-${new Date(r.date).toLocaleDateString("it-IT")}<br>
-Km ${r.distance.toFixed(2)}<br>
-Tempo ${formatTime(r.time)}
-
-`
+new Date(r.date).toLocaleDateString("it-IT")+
+"<br>Km "+r.distance.toFixed(2)+
+"<br>Tempo "+r.time+" sec"
 
 list.appendChild(div)
 
@@ -207,57 +157,49 @@ list.appendChild(div)
 
 }
 
-/* -------- WEATHER -------- */
-
-const cityInput=$("city")
-const btnCity=$("btnCity")
-const btnGeo=$("btnGeo")
-const statusBox=$("status")
-const bestBox=$("best")
-const rowsBox=$("rows")
-
-function setStatus(msg){
-if(statusBox)statusBox.innerText=msg
-}
+/* ---------- METEO ---------- */
 
 function score(temp,rain,wind){
 
-let s=100
+var s=100
 
-if(temp<5)s-=30
-if(temp>28)s-=30
+if(temp<5) s-=30
+if(temp>28) s-=30
 
 s-=rain*15
 s-=wind*1.5
 
-return clamp(Math.round(s),0,100)
+if(s<0) s=0
+
+return Math.round(s)
 
 }
 
 function scoreClass(s){
-if(s>80)return "score ok"
-if(s>60)return "score warn"
-return "score bad"
+
+if(s>80) return "green"
+if(s>60) return "orange"
+return "red"
+
 }
 
-async function searchCity(){
+function searchCity(){
 
-const city=cityInput.value
+var city=document.getElementById("city").value
 
 if(!city){
-setStatus("Inserisci città")
+document.getElementById("status").innerText="Inserisci città"
 return
 }
 
-setStatus("Cerco città...")
+fetch("https://geocoding-api.open-meteo.com/v1/search?name="+city+"&count=1&language=it&format=json")
 
-try{
+.then(r=>r.json())
 
-const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&language=it&format=json`)
-const j=await r.json()
+.then(function(j){
 
 if(!j.results){
-setStatus("Città non trovata")
+document.getElementById("status").innerText="Città non trovata"
 return
 }
 
@@ -266,145 +208,104 @@ j.results[0].latitude,
 j.results[0].longitude
 )
 
-}catch{
-
-setStatus("Errore ricerca città")
+})
 
 }
 
-}
+function loadWeather(lat,lon){
 
-async function loadWeather(lat,lon){
+document.getElementById("status").innerText="Carico meteo..."
 
-try{
+fetch("https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lon+"&hourly=temperature_2m,precipitation,windspeed_10m&forecast_days=7&timezone=auto")
 
-setStatus("Carico meteo...")
+.then(r=>r.json())
 
-const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,windspeed_10m&forecast_days=7&timezone=auto`)
-const data=await r.json()
+.then(function(data){
 
-rowsBox.innerHTML=""
-bestBox.innerHTML=""
+var temps=data.hourly.temperature_2m
+var rain=data.hourly.precipitation
+var wind=data.hourly.windspeed_10m
+var time=data.hourly.time
 
-const t=data.hourly.temperature_2m
-const rain=data.hourly.precipitation
-const wind=data.hourly.windspeed_10m
-const time=data.hourly.time
+var rows=document.getElementById("rows")
+var best=document.getElementById("best")
 
-let arr=[]
+rows.innerHTML=""
+best.innerHTML=""
 
-for(let i=0;i<24;i++){
+var arr=[]
 
-const s=score(t[i],rain[i],wind[i])
+for(var i=0;i<24;i++){
+
+var s=score(temps[i],rain[i],wind[i])
 
 arr.push({
 time:time[i],
 score:s,
-temp:t[i],
+temp:temps[i],
 rain:rain[i],
 wind:wind[i]
 })
 
-const tr=document.createElement("tr")
+var tr=document.createElement("tr")
 
-tr.innerHTML=`
+tr.innerHTML=
+"<td>"+time[i].substring(11,16)+"</td>"+
+"<td>"+s+"</td>"+
+"<td>"+temps[i]+"°C</td>"+
+"<td>"+rain[i]+" mm</td>"+
+"<td>"+wind[i]+" km/h</td>"
 
-<td>${time[i].substring(11,16)}</td>
-<td class="${scoreClass(s)}">${s}</td>
-<td>${t[i]}°C</td>
-<td>${rain[i]} mm</td>
-<td>${wind[i]} km/h</td>
-
-`
-
-rowsBox.appendChild(tr)
+rows.appendChild(tr)
 
 }
 
-arr.sort((a,b)=>b.score-a.score)
+arr.sort(function(a,b){
+return b.score-a.score
+})
 
-for(let i=0;i<3;i++){
+for(var i=0;i<3;i++){
 
-const w=arr[i]
+var w=arr[i]
 
-const div=document.createElement("div")
-div.className="card"
+var div=document.createElement("div")
 
-div.innerHTML=`
+div.innerHTML=
+"<strong>"+(i+1)+") "+w.time.substring(11,16)+"</strong><br>"+
+"Temp "+w.temp+"°C<br>"+
+"Pioggia "+w.rain+"<br>"+
+"Vento "+w.wind+"<br>"+
+"Score "+w.score
 
-<strong>${i+1}) ${w.time.substring(11,16)}</strong><br>
-Temp ${w.temp}°C |
-Pioggia ${w.rain} |
-Vento ${w.wind}
-
-<div class="${scoreClass(w.score)}">${w.score}</div>
-
-`
-
-bestBox.appendChild(div)
+best.appendChild(div)
 
 }
 
-setStatus("Meteo aggiornato")
+document.getElementById("status").innerText="Meteo aggiornato"
 
-}catch{
-
-setStatus("Errore meteo")
+})
 
 }
 
-}
+/* ---------- INIT ---------- */
 
-btnCity?.addEventListener("click",searchCity)
+document.addEventListener("DOMContentLoaded",function(){
 
-btnGeo?.addEventListener("click",()=>{
+initMap()
+renderHistory()
 
-navigator.geolocation.getCurrentPosition(pos=>{
+showSection("dashboard")
+
+document.getElementById("btnCity")?.addEventListener("click",searchCity)
+
+document.getElementById("btnGeo")?.addEventListener("click",function(){
+
+navigator.geolocation.getCurrentPosition(function(pos){
 
 loadWeather(
 pos.coords.latitude,
 pos.coords.longitude
 )
-
-})
-
-})
-
-/* -------- INIT -------- */
-
-document.addEventListener("DOMContentLoaded",()=>{
-
-initMap()
-renderHistory()
-showSection("dashboard")
-
-})
-
-/* INCOLLA QUESTO ALLA FINE DI app.js */
-
-document.addEventListener("DOMContentLoaded", function () {
-
-document.querySelectorAll(".nav-item").forEach(btn => {
-
-btn.addEventListener("click", function(){
-
-const target=this.getAttribute("data-target")
-
-document.querySelectorAll(".screen").forEach(s=>{
-s.classList.remove("active")
-})
-
-const screen=document.getElementById(target)
-
-if(screen){
-screen.classList.add("active")
-}
-
-document.querySelectorAll(".nav-item").forEach(b=>{
-b.classList.remove("active")
-})
-
-this.classList.add("active")
 
 })
 
