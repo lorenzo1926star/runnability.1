@@ -1,58 +1,195 @@
 ﻿<!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RunTrack Pro</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RunTrack Pro</title>
 
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 </head>
 <body>
 
-<header>
-  <h1>🏃 RunTrack Pro</h1>
+<header class="app-header">
+<div class="app-title">
+<div class="logo">🏃</div>
+<div>
+<div class="title">RunTrack Pro</div>
+<div class="subtitle">Allenamento Outdoor</div>
+</div>
+</div>
 </header>
 
-<nav>
-  <button onclick="showSection('dashboard')">Dashboard</button>
-  <button onclick="showSection('map')">Allenamento</button>
-  <button onclick="showSection('history')">Storico</button>
-  <button onclick="showSection('planner')">Planner</button>
+<main class="app-main">
+
+<section id="dashboard" class="screen active">
+<div class="card">
+<div class="card-title">Dashboard</div>
+<div class="kpi">
+<div class="kpi-item">
+<div class="kpi-label">Allenamenti</div>
+<div class="kpi-value" id="kpiRuns">0</div>
+</div>
+
+<div class="kpi-item">
+<div class="kpi-label">Km Totali</div>
+<div class="kpi-value" id="kpiKm">0</div>
+</div>
+
+<div class="kpi-item">
+<div class="kpi-label">Kcal</div>
+<div class="kpi-value" id="kpiKcal">0</div>
+</div>
+</div>
+</div>
+</section>
+
+
+<section id="map" class="screen">
+
+<div class="card">
+<div class="card-title">Allenamento</div>
+
+<div id="mapid"></div>
+
+<div class="workout-bar">
+<button class="btn secondary" onclick="startRun()">Inizia</button>
+<button class="btn danger" onclick="stopRun()">Stop</button>
+</div>
+
+<div id="stats"></div>
+
+</div>
+
+</section>
+
+
+<section id="history" class="screen">
+<div class="card">
+<div class="card-title">Storico Allenamenti</div>
+
+<div id="historyList"></div>
+
+</div>
+</section>
+
+
+<section id="planner" class="screen">
+
+<div class="card">
+<div class="card-title">Planner Settimanale</div>
+
+<div id="plannerUI"></div>
+
+</div>
+
+</section>
+
+
+<section id="weatherpro" class="screen">
+
+<div class="card">
+
+<div class="card-title">Meteo Pro</div>
+
+<div class="row">
+
+<button class="btn secondary" id="btnGeo">Usa la mia posizione</button>
+
+<input id="city" placeholder="Cerca città">
+
+<button class="btn secondary" id="btnCity">Cerca</button>
+
+</div>
+
+<div class="row">
+
+<select id="pref">
+<option value="balanced">Bilanciato</option>
+<option value="cool">Preferisco fresco</option>
+<option value="warm">Preferisco caldo</option>
+<option value="no_rain">No pioggia</option>
+<option value="low_wind">No vento</option>
+</select>
+
+</div>
+
+<div id="status"></div>
+
+<div class="tabs">
+
+<button class="tabbtn active" id="tabToday">Oggi</button>
+
+<button class="tabbtn" id="tab7d">7 Giorni</button>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="card-title">Migliori Finestre</div>
+
+<div id="best"></div>
+
+</div>
+
+<div class="card">
+
+<div class="card-title">Dettaglio Meteo</div>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Ora</th>
+<th>Score</th>
+<th>Temp</th>
+<th>Pioggia</th>
+<th>Vento</th>
+
+</tr>
+
+</thead>
+
+<tbody id="rows"></tbody>
+
+</table>
+
+</div>
+
+</section>
+
+</main>
+
+
+<nav class="bottom-nav">
+
+<button class="nav-item active" onclick="showSection('dashboard')">
+🏠
+</button>
+
+<button class="nav-item" onclick="showSection('map')">
+🗺
+</button>
+
+<button class="nav-item" onclick="showSection('history')">
+📒
+</button>
+
+<button class="nav-item" onclick="showSection('planner')">
+📅
+</button>
+
+<button class="nav-item" onclick="showSection('weatherpro')">
+🌤
+</button>
+
 </nav>
 
-<section id="dashboard" class="active">
-  <h2>Meteo Live</h2>
-  <div id="weather"></div>
-</section>
-
-<section id="map">
-  <div id="mapid"></div>
-  <div class="controls">
-    <button onclick="startRun()">▶ Inizia</button>
-    <button onclick="stopRun()">⏹ Stop</button>
-  </div>
-  <div id="stats"></div>
-</section>
-
-<section id="history">
-  <h2>Storico Allenamenti</h2>
-  <div id="historyList"></div>
-
-  <div id="historyDetail" class="card" style="display:none;">
-    <h3>Dettaglio allenamento</h3>
-    <div id="historyDetailBody"></div>
-    <button onclick="closeDetail()">Chiudi</button>
-    <button onclick="viewOnMap()">Vedi sulla mappa</button>
-  </div>
-</section>
-
-<section id="planner">
-  <h2>Pianifica Settimana</h2>
-  <div id="plannerUI"></div>
-</section>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="app.js"></script>

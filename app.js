@@ -257,3 +257,72 @@ function speedKmH(distanceKm, sec){
   if (sec <= 0) return "0.0";
   return (distanceKm / (sec / 3600)).toFixed(1);
 }
+
+function showSection(id){
+
+document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"))
+
+document.getElementById(id).classList.add("active")
+
+}
+
+
+document.getElementById("btnGeo")?.addEventListener("click",()=>{
+
+navigator.geolocation.getCurrentPosition(async pos=>{
+
+const lat=pos.coords.latitude
+const lon=pos.coords.longitude
+
+loadWeather(lat,lon)
+
+})
+
+})
+
+
+document.getElementById("btnCity")?.addEventListener("click",async()=>{
+
+const city=document.getElementById("city").value
+
+const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}`)
+
+const j=await r.json()
+
+const lat=j.results[0].latitude
+const lon=j.results[0].longitude
+
+loadWeather(lat,lon)
+
+})
+
+
+async function loadWeather(lat,lon){
+
+const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,windspeed_10m`
+
+const r=await fetch(url)
+
+const data=await r.json()
+
+const rows=document.getElementById("rows")
+
+rows.innerHTML=""
+
+for(let i=0;i<24;i++){
+
+const tr=document.createElement("tr")
+
+tr.innerHTML=`
+<td>${data.hourly.time[i].substring(11,16)}</td>
+<td>${Math.floor(Math.random()*100)}</td>
+<td>${data.hourly.temperature_2m[i]}°C</td>
+<td>${data.hourly.precipitation[i]}</td>
+<td>${data.hourly.windspeed_10m[i]} km/h</td>
+`
+
+rows.appendChild(tr)
+
+}
+
+}
