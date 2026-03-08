@@ -457,3 +457,202 @@ document.addEventListener("DOMContentLoaded",function(){
 renderRunPlan()
 
 })
+
+/* AGGIUNGI QUESTO BLOCCO IN FONDO A app.js */
+
+/* ===== RUN PLAN ===== */
+
+function addBestSlotToPlan(start,end){
+
+var plans=JSON.parse(localStorage.getItem("runplans")||"[]")
+
+var date=start.substring(0,10)
+
+plans=plans.filter(p=>p.date!==date)
+
+plans.push({
+id:Date.now(),
+date:date,
+start:start,
+end:end,
+workout:"Corsa lenta",
+notify:document.getElementById("notifyPref").value
+})
+
+localStorage.setItem("runplans",JSON.stringify(plans))
+
+renderRunPlan()
+
+}
+
+function removeRunPlan(id){
+
+var plans=JSON.parse(localStorage.getItem("runplans")||"[]")
+
+plans=plans.filter(p=>p.id!=id)
+
+localStorage.setItem("runplans",JSON.stringify(plans))
+
+renderRunPlan()
+
+}
+
+function updateWorkout(id,value){
+
+var plans=JSON.parse(localStorage.getItem("runplans")||"[]")
+
+plans.forEach(p=>{
+if(p.id==id){p.workout=value}
+})
+
+localStorage.setItem("runplans",JSON.stringify(plans))
+
+}
+
+function renderRunPlan(){
+
+var table=document.getElementById("runplan")
+
+if(!table)return
+
+var plans=JSON.parse(localStorage.getItem("runplans")||"[]")
+
+table.innerHTML=""
+
+plans.forEach(p=>{
+
+var s=new Date(p.start)
+var e=new Date(p.end)
+
+var tr=document.createElement("tr")
+
+tr.innerHTML=
+
+"<td>"+s.toLocaleDateString("it-IT")+"</td>"+
+"<td>"+String(s.getHours()).padStart(2,"0")+":00-"+String(e.getHours()).padStart(2,"0")+":00</td>"+
+"<td><select class='plan-select' onchange='updateWorkout("+p.id+",this.value)'>"+
+"<option>Corsa lenta</option>"+
+"<option>Ripetute</option>"+
+"<option>Corsa libera</option>"+
+"<option>Intervalli</option>"+
+"<option>VO2 Max</option>"+
+"</select></td>"+
+"<td>"+p.notify+" min</td>"+
+"<td><button class='plan-remove' onclick='removeRunPlan("+p.id+")'>X</button></td>"
+
+table.appendChild(tr)
+
+})
+
+}
+
+/* ===== SLOT METEO 2 ORE ===== */
+
+function generateSlots(data){
+
+var temps=data.hourly.temperature_2m
+var rain=data.hourly.precipitation
+var wind=data.hourly.windspeed_10m
+var time=data.hourly.time
+
+var rows=document.getElementById("rows")
+
+rows.innerHTML=""
+
+var now=new Date()
+
+for(var i=0;i<time.length-1;i+=2){
+
+var start=new Date(time[i])
+var end=new Date(time[i+1])
+end.setHours(end.getHours()+1)
+
+if(start<now)continue
+
+var temp=(temps[i]+temps[i+1])/2
+var r=(rain[i]+rain[i+1])/2
+var w=(wind[i]+wind[i+1])/2
+
+var s=score(temp,r,w)
+
+var tr=document.createElement("tr")
+
+tr.innerHTML=
+
+"<td>"+start.toLocaleDateString("it-IT")+"</td>"+
+"<td>"+String(start.getHours()).padStart(2,"0")+":00-"+String(end.getHours()).padStart(2,"0")+":00</td>"+
+"<td>"+s+"</td>"+
+"<td>"+temp.toFixed(1)+"°C</td>"+
+"<td>"+r.toFixed(1)+" mm</td>"+
+"<td>"+w.toFixed(1)+" km/h</td>"+
+"<td><button class='slot-btn' onclick='addBestSlotToPlan(\""+start.toISOString()+"\",\""+end.toISOString()+"\")'>+</button></td>"
+
+rows.appendChild(tr)
+
+}
+
+}
+
+/* ===== 7 GIORNI ===== */
+
+function weather7days(data){
+
+var temps=data.hourly.temperature_2m
+var rain=data.hourly.precipitation
+var wind=data.hourly.windspeed_10m
+var time=data.hourly.time
+
+var best=document.getElementById("best")
+
+best.innerHTML=""
+
+for(var d=0;d<7;d++){
+
+var start=d*24
+
+var bestScore=0
+var bestSlot=null
+
+for(var i=start;i<start+24;i+=2){
+
+var temp=(temps[i]+temps[i+1])/2
+var r=(rain[i]+rain[i+1])/2
+var w=(wind[i]+wind[i+1])/2
+
+var s=score(temp,r,w)
+
+if(s>bestScore){
+
+bestScore=s
+bestSlot=i
+
+}
+
+}
+
+var date=new Date(time[bestSlot])
+
+var div=document.createElement("div")
+
+div.className="best-slot"
+
+div.innerHTML=
+
+"<div>"+
+"<strong>"+date.toLocaleDateString("it-IT")+"</strong><br>"+
+"Miglior fascia "+
+String(date.getHours()).padStart(2,"0")+":00"+
+"</div>"+
+"<div class='score-ok'>"+bestScore+"</div>"
+
+best.appendChild(div)
+
+}
+
+}
+
+document.addEventListener("DOMContentLoaded",function(){
+
+renderRunPlan()
+
+})

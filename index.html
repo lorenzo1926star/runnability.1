@@ -87,6 +87,8 @@
 </section>
 
 
+<!-- SOSTITUISCI COMPLETAMENTE LA SEZIONE METEO IN index.html -->
+
 <section id="weatherpro" class="screen">
 
 <div class="card">
@@ -95,47 +97,11 @@
 
 <div class="row">
 
-<button class="btn secondary" id="btnGeo">
-Usa la mia posizione
-</button>
+<button class="btn secondary" id="btnGeo">Usa la mia posizione</button>
 
 <input id="city" type="text" placeholder="Cerca città (es. Roma)">
 
-<button class="btn secondary" id="btnCity">
-Cerca
-</button>
-
-</div>
-
-<!-- =====================================================
-AGGIUNGERE IN index.html NELLA SEZIONE METEO
-TAB RUN PLAN
-===================================================== -->
-
-<div class="card">
-
-<h3>Run Plan</h3>
-
-<input type="date" id="planDate">
-
-<input type="time" id="planTime">
-
-<button onclick="addRunPlan(planDate.value,planTime.value)">
-Aggiungi allenamento
-</button>
-
-<table>
-
-<thead>
-<tr>
-<th>Data</th>
-<th>Ora</th>
-</tr>
-</thead>
-
-<tbody id="runplan"></tbody>
-
-</table>
+<button class="btn secondary" id="btnCity">Cerca</button>
 
 </div>
 
@@ -146,10 +112,26 @@ Aggiungi allenamento
 <select id="pref">
 
 <option value="balanced">Bilanciato</option>
+
 <option value="cool">Preferisco fresco</option>
+
 <option value="warm">Preferisco caldo</option>
+
 <option value="no_rain">Evita pioggia</option>
+
 <option value="low_wind">Evita vento</option>
+
+</select>
+
+<label>Notifica</label>
+
+<select id="notifyPref">
+
+<option value="60">1 ora prima</option>
+
+<option value="30">30 minuti prima</option>
+
+<option value="15">15 minuti prima</option>
 
 </select>
 
@@ -159,17 +141,87 @@ Aggiungi allenamento
 
 <div class="tabs">
 
-<button class="tabbtn active" id="tabToday">
-Oggi
-</button>
+<button class="tabbtn active" id="tabToday">Oggi</button>
 
-<button class="tabbtn" id="tab7d">
-7 giorni
-</button>
+<button class="tabbtn" id="tab7d">7 giorni</button>
 
 </div>
 
 </div>
+
+<div class="card">
+
+<div class="card-title">Migliori fasce orarie</div>
+
+<div id="best"></div>
+
+</div>
+
+<div class="card">
+
+<div class="card-title">Fasce orarie (slot da 2 ore)</div>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Data</th>
+
+<th>Fascia</th>
+
+<th>Score</th>
+
+<th>Temp</th>
+
+<th>Pioggia</th>
+
+<th>Vento</th>
+
+<th>Seleziona</th>
+
+</tr>
+
+</thead>
+
+<tbody id="rows"></tbody>
+
+</table>
+
+</div>
+
+<div class="card">
+
+<div class="card-title">Run Plan</div>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Data</th>
+
+<th>Fascia</th>
+
+<th>Allenamento</th>
+
+<th>Notifica</th>
+
+<th></th>
+
+</tr>
+
+</thead>
+
+<tbody id="runplan"></tbody>
+
+</table>
+
+</div>
+
+</section>
 
 
 <div class="card">

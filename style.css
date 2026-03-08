@@ -135,3 +135,45 @@ th,td{
 padding:8px;
 border-bottom:1px solid rgba(255,255,255,0.1);
 }
+
+/* AGGIUNGI ALLA FINE DI style.css */
+
+.slot-btn{
+padding:8px 12px;
+border-radius:8px;
+border:none;
+background:#2563eb;
+color:white;
+cursor:pointer;
+}
+
+.plan-select{
+padding:6px;
+border-radius:6px;
+background:#0f172a;
+color:white;
+border:none;
+}
+
+.plan-remove{
+padding:6px 10px;
+border:none;
+border-radius:6px;
+background:#ef4444;
+color:white;
+cursor:pointer;
+}
+
+.best-slot{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:10px;
+margin-bottom:10px;
+background:#111827;
+border-radius:10px;
+}
+
+.score-ok{color:#22c55e;font-weight:bold}
+.score-warn{color:#f59e0b;font-weight:bold}
+.score-bad{color:#ef4444;font-weight:bold}
