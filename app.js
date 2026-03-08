@@ -212,6 +212,10 @@ j.results[0].longitude
 
 }
 
+/* =====================================================
+SOSTITUISCI SOLO LA FUNZIONE loadWeather IN app.js
+===================================================== */
+
 function loadWeather(lat,lon){
 
 document.getElementById("status").innerText="Carico meteo..."
@@ -235,46 +239,60 @@ best.innerHTML=""
 
 var arr=[]
 
-for(var i=0;i<24;i++){
+/* ===== DETTAGLIO 2 ORE ===== */
 
-var s=score(temps[i],rain[i],wind[i])
+for(var i=0;i<48;i+=2){
+
+var avgTemp=(temps[i]+temps[i+1])/2
+var avgRain=(rain[i]+rain[i+1])/2
+var avgWind=(wind[i]+wind[i+1])/2
+
+var s=score(avgTemp,avgRain,avgWind)
+
+var date=new Date(time[i])
 
 arr.push({
-time:time[i],
+date:date,
 score:s,
-temp:temps[i],
-rain:rain[i],
-wind:wind[i]
+temp:avgTemp,
+rain:avgRain,
+wind:avgWind
 })
 
 var tr=document.createElement("tr")
 
 tr.innerHTML=
-"<td>"+time[i].substring(11,16)+"</td>"+
+
+"<td>"+date.toLocaleDateString("it-IT")+" "+date.getHours()+":00</td>"+
 "<td>"+s+"</td>"+
-"<td>"+temps[i]+"°C</td>"+
-"<td>"+rain[i]+" mm</td>"+
-"<td>"+wind[i]+" km/h</td>"
+"<td>"+avgTemp.toFixed(1)+"°C</td>"+
+"<td>"+avgRain.toFixed(1)+" mm</td>"+
+"<td>"+avgWind.toFixed(1)+" km/h</td>"
 
 rows.appendChild(tr)
 
 }
 
+/* ===== MIGLIORI 3 FASCE ===== */
+
 arr.sort(function(a,b){
 return b.score-a.score
 })
 
-for(var i=0;i<3;i++){
+for(var j=0;j<3;j++){
 
-var w=arr[i]
+var w=arr[j]
 
 var div=document.createElement("div")
 
+div.className="card"
+
 div.innerHTML=
-"<strong>"+(i+1)+") "+w.time.substring(11,16)+"</strong><br>"+
-"Temp "+w.temp+"°C<br>"+
-"Pioggia "+w.rain+"<br>"+
-"Vento "+w.wind+"<br>"+
+
+"<strong>"+(j+1)+") "+w.date.toLocaleDateString("it-IT")+" "+w.date.getHours()+":00</strong><br>"+
+"Temp "+w.temp.toFixed(1)+"°C<br>"+
+"Pioggia "+w.rain.toFixed(1)+"<br>"+
+"Vento "+w.wind.toFixed(1)+"<br>"+
 "Score "+w.score
 
 best.appendChild(div)
@@ -282,6 +300,123 @@ best.appendChild(div)
 }
 
 document.getElementById("status").innerText="Meteo aggiornato"
+
+})
+
+}
+
+/* =====================================================
+AGGIUNGI QUESTA FUNZIONE SOTTO loadWeather
+TAB PREVISIONI 7 GIORNI
+===================================================== */
+
+function weather7days(lat,lon){
+
+fetch("https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lon+"&hourly=temperature_2m,precipitation,windspeed_10m&forecast_days=7&timezone=auto")
+
+.then(r=>r.json())
+
+.then(function(data){
+
+var temps=data.hourly.temperature_2m
+var rain=data.hourly.precipitation
+var wind=data.hourly.windspeed_10m
+var time=data.hourly.time
+
+var best=document.getElementById("best")
+
+best.innerHTML=""
+
+for(var d=0; d<7; d++){
+
+var start=d*24
+
+var daily=[]
+
+for(var i=start;i<start+24;i+=2){
+
+var avgTemp=(temps[i]+temps[i+1])/2
+var avgRain=(rain[i]+rain[i+1])/2
+var avgWind=(wind[i]+wind[i+1])/2
+
+var s=score(avgTemp,avgRain,avgWind)
+
+daily.push({
+time:time[i],
+score:s,
+temp:avgTemp,
+rain:avgRain,
+wind:avgWind
+})
+
+}
+
+daily.sort(function(a,b){
+return b.score-a.score
+})
+
+var bestSlot=daily[0]
+
+var date=new Date(bestSlot.time)
+
+var div=document.createElement("div")
+
+div.className="card"
+
+div.innerHTML=
+
+"<strong>"+date.toLocaleDateString("it-IT")+"</strong><br>"+
+"Miglior fascia: "+date.getHours()+":00<br>"+
+"Temp "+bestSlot.temp.toFixed(1)+"°C<br>"+
+"Score "+bestSlot.score
+
+best.appendChild(div)
+
+}
+
+})
+
+}
+
+/* =====================================================
+RUN PLAN — AGGIUNGERE IN app.js
+===================================================== */
+
+function addRunPlan(date,time){
+
+var plans=JSON.parse(localStorage.getItem("runplans")||"[]")
+
+plans.push({
+date:date,
+time:time
+})
+
+localStorage.setItem("runplans",JSON.stringify(plans))
+
+renderRunPlan()
+
+}
+
+function renderRunPlan(){
+
+var table=document.getElementById("runplan")
+
+if(!table)return
+
+var plans=JSON.parse(localStorage.getItem("runplans")||"[]")
+
+table.innerHTML=""
+
+plans.forEach(function(p){
+
+var tr=document.createElement("tr")
+
+tr.innerHTML=
+
+"<td>"+p.date+"</td>"+
+"<td>"+p.time+"</td>"
+
+table.appendChild(tr)
 
 })
 
@@ -310,5 +445,15 @@ pos.coords.longitude
 })
 
 })
+
+})
+
+/* =====================================================
+AGGIUNGERE ALLA FINE DI app.js
+===================================================== */
+
+document.addEventListener("DOMContentLoaded",function(){
+
+renderRunPlan()
 
 })

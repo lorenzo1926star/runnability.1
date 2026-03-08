@@ -107,6 +107,38 @@ Cerca
 
 </div>
 
+<!-- =====================================================
+AGGIUNGERE IN index.html NELLA SEZIONE METEO
+TAB RUN PLAN
+===================================================== -->
+
+<div class="card">
+
+<h3>Run Plan</h3>
+
+<input type="date" id="planDate">
+
+<input type="time" id="planTime">
+
+<button onclick="addRunPlan(planDate.value,planTime.value)">
+Aggiungi allenamento
+</button>
+
+<table>
+
+<thead>
+<tr>
+<th>Data</th>
+<th>Ora</th>
+</tr>
+</thead>
+
+<tbody id="runplan"></tbody>
+
+</table>
+
+</div>
+
 <div class="row">
 
 <label>Preferenze clima</label>
