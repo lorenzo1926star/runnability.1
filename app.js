@@ -379,3 +379,35 @@ renderHistory()
 showSection("dashboard")
 
 })
+
+/* INCOLLA QUESTO ALLA FINE DI app.js */
+
+document.addEventListener("DOMContentLoaded", function () {
+
+document.querySelectorAll(".nav-item").forEach(btn => {
+
+btn.addEventListener("click", function(){
+
+const target=this.getAttribute("data-target")
+
+document.querySelectorAll(".screen").forEach(s=>{
+s.classList.remove("active")
+})
+
+const screen=document.getElementById(target)
+
+if(screen){
+screen.classList.add("active")
+}
+
+document.querySelectorAll(".nav-item").forEach(b=>{
+b.classList.remove("active")
+})
+
+this.classList.add("active")
+
+})
+
+})
+
+})
