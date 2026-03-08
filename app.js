@@ -281,23 +281,86 @@ loadWeather(lat,lon)
 })
 
 
-document.getElementById("btnCity")?.addEventListener("click",async()=>{
+document.getElementById("btnCity")?.addEventListener("click", async () => {
 
-const city=document.getElementById("city").value
+const city = document.getElementById("city").value
 
-const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}`)
+if(!city){
+document.getElementById("status").innerText = "Inserisci una città"
+return
+}
 
-const j=await r.json()
+document.getElementById("status").innerText = "Cerco la città..."
 
-const lat=j.results[0].latitude
-const lon=j.results[0].longitude
+try{
 
-loadWeather(lat,lon)
+const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&language=it&format=json`)
+
+const j = await r.json()
+
+if(!j.results || j.results.length === 0){
+document.getElementById("status").innerText = "Città non trovata"
+return
+}
+
+const lat = j.results[0].latitude
+const lon = j.results[0].longitude
+const name = j.results[0].name
+
+document.getElementById("status").innerText = "Previsioni per " + name
+
+loadWeather(lat, lon)
+
+}catch(err){
+
+document.getElementById("status").innerText = "Errore nel recupero dati"
+
+}
 
 })
 
 
 async function loadWeather(lat,lon){
+
+document.getElementById("status").innerText = "Carico meteo..."
+
+try{
+
+const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,windspeed_10m`
+
+const r=await fetch(url)
+
+const data=await r.json()
+
+const rows=document.getElementById("rows")
+
+rows.innerHTML=""
+
+for(let i=0;i<24;i++){
+
+const tr=document.createElement("tr")
+
+tr.innerHTML=`
+<td>${data.hourly.time[i].substring(11,16)}</td>
+<td>${Math.floor(Math.random()*100)}</td>
+<td>${data.hourly.temperature_2m[i]}°C</td>
+<td>${data.hourly.precipitation[i]} mm</td>
+<td>${data.hourly.windspeed_10m[i]} km/h</td>
+`
+
+rows.appendChild(tr)
+
+}
+
+document.getElementById("status").innerText = "Previsioni aggiornate"
+
+}catch(err){
+
+document.getElementById("status").innerText = "Errore caricamento meteo"
+
+}
+
+}
 
 const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,windspeed_10m`
 
