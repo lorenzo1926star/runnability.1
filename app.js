@@ -603,13 +603,19 @@ nextWeatherEl.innerHTML=
 
 }
 
-function addBestSlotToPlan(start,end){
+function addBestSlotToPlan(start,end,temp,rain,wind,slotScore){
 
 var plans=JSON.parse(localStorage.getItem("runplans")||"[]")
 
 var date=start.substring(0,10)
 
-plans=plans.filter(p=>p.date!==date)
+var alreadyExists=plans.some(function(p){
+return p.start===start && p.end===end
+})
+
+if(alreadyExists){
+return
+}
 
 plans.push({
 id:Date.now(),
@@ -617,13 +623,18 @@ date:date,
 start:start,
 end:end,
 workout:"Corsa Lenta",
-notify:document.getElementById("notifyPref").value
+notify:document.getElementById("notifyPref").value,
+temp:typeof temp==="number"?temp:null,
+rain:typeof rain==="number"?rain:null,
+wind:typeof wind==="number"?wind:null,
+score:typeof slotScore==="number"?slotScore:null
 })
 
 localStorage.setItem("runplans",JSON.stringify(plans))
 
 renderRunPlan()
 scheduleRunNotifications()
+updateDashboard()
 
 }
 
@@ -676,7 +687,13 @@ var workout=p.workout||"Corsa Lenta"
 tr.innerHTML=
 
 "<td>"+s.toLocaleDateString("it-IT")+"</td>"+
-"<td>"+String(s.getHours()).padStart(2,"0")+":00-"+String(e.getHours()).padStart(2,"0")+":00</td>"+
+"<td>"+
+String(s.getHours()).padStart(2,"0")+":00-"+String(e.getHours()).padStart(2,"0")+":00"+
+(typeof p.score==="number"?"<br>Score "+p.score:"")+
+(typeof p.temp==="number"?"<br>Temp "+p.temp.toFixed(1)+"°C":"")+
+(typeof p.rain==="number"?" · Pioggia "+p.rain.toFixed(1)+" mm":"")+
+(typeof p.wind==="number"?" · Vento "+p.wind.toFixed(1)+" km/h":"")+
+"</td>"+
 "<td><select class='plan-select' onchange='updateWorkout("+p.id+",this.value)'>"+
 "<option"+(workout==="Corsa Lenta"?" selected":"")+">Corsa Lenta</option>"+
 "<option"+(workout==="Ripetute"?" selected":"")+">Ripetute</option>"+
@@ -717,10 +734,21 @@ detailDiv.className="week-day-detail"
 
 if(dayPlans.length){
 
-var p=dayPlans[0]
+detailDiv.innerHTML=dayPlans
+.sort(function(a,b){
+return new Date(a.start)-new Date(b.start)
+})
+.map(function(p){
 var start=new Date(p.start)
-var timeStr=String(start.getHours()).padStart(2,"0")+":00"
-detailDiv.textContent=(p.workout||"Corsa Lenta")+" – "+timeStr
+var end=new Date(p.end)
+return (
+"<div>"+
+String(start.getHours()).padStart(2,"0")+":00-"+String(end.getHours()).padStart(2,"0")+":00 " +
+"· "+(p.workout||"Corsa Lenta")+
+"</div>"
+)
+})
+.join("")
 
 }else{
 
@@ -795,7 +823,7 @@ String(start.getHours()).padStart(2,"0")+":00-"+String(end.getHours()).padStart(
 "<div>"+
 scoreLabel(s)+"<br>"+
 "Score "+s+"<br>"+
-"<button class='slot-btn' onclick='addBestSlotToPlan(\""+start.toISOString()+"\",\""+end.toISOString()+"\")'>+</button>"+
+"<button class='slot-btn' onclick='addBestSlotToPlan(\""+start.toISOString()+"\",\""+end.toISOString()+"\","+temp+","+r+","+w+","+s+")'>+</button>"+
 "</div>"
 
 rows.appendChild(card)
@@ -877,7 +905,8 @@ String(slot.start.getHours()).padStart(2,"0")+":00-"+String(slot.end.getHours())
 "</div>"+
 "<div>"+
 label+"<br>"+
-"Score "+slot.score+
+"Score "+slot.score+"<br>"+
+"<button class='slot-btn' onclick='addBestSlotToPlan(\""+slot.start.toISOString()+"\",\""+slot.end.toISOString()+"\","+slot.temp+","+slot.rain+","+slot.wind+","+slot.score+")'>+</button>"+
 "</div>"
 
 best.appendChild(div)
