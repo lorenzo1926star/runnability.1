@@ -295,14 +295,15 @@ lastWeatherData=data
 
 var tab7d=document.getElementById("tab7d")
 var tabToday=document.getElementById("tabToday")
+var interval=getTimePreferenceInterval()
 
 if(tab7d && tab7d.classList.contains("active")){
 
-weather7days(data)
+weather7days(data,interval)
 
 }else{
 
-generateSlots(data)
+generateSlots(data,interval)
 
 }
 
@@ -377,7 +378,7 @@ tabToday.classList.add("active")
 tab7d.classList.remove("active")
 
 if(lastWeatherData){
-generateSlots(lastWeatherData)
+generateSlots(lastWeatherData,getTimePreferenceInterval())
 }else{
 document.getElementById("status").innerText="Carica prima il meteo."
 }
@@ -390,7 +391,7 @@ tab7d.classList.add("active")
 tabToday.classList.remove("active")
 
 if(lastWeatherData){
-weather7days(lastWeatherData)
+weather7days(lastWeatherData,getTimePreferenceInterval())
 }else{
 document.getElementById("status").innerText="Carica prima il meteo."
 }
@@ -742,6 +743,7 @@ updateNextRunWidgets()
 /* ===== SLOT METEO 2 ORE ===== */
 
 function generateSlots(data){
+function generateSlots(data,interval){
 
 var temps=data.hourly.temperature_2m
 var rain=data.hourly.precipitation
@@ -753,6 +755,7 @@ var rows=document.getElementById("rows")
 rows.innerHTML=""
 
 var now=new Date()
+var todayStr=now.toISOString().substring(0,10)
 
 for(var i=0;i<time.length-1;i+=2){
 
@@ -761,6 +764,15 @@ var end=new Date(time[i+1])
 end.setHours(end.getHours()+1)
 
 if(start<now)continue
+
+var dateStr=start.toISOString().substring(0,10)
+if(dateStr!==todayStr)continue
+
+var totalMinutes=start.getHours()*60+start.getMinutes()
+
+if(interval){
+if(totalMinutes<interval.start||totalMinutes>=interval.end)continue
+}
 
 var temp=(temps[i]+temps[i+1])/2
 var r=(rain[i]+rain[i+1])/2
@@ -795,7 +807,7 @@ rows.appendChild(card)
 
 /* ===== 7 GIORNI ===== */
 
-function weather7days(data){
+function weather7days(data,interval){
 
 var temps=data.hourly.temperature_2m
 var rain=data.hourly.precipitation
@@ -808,14 +820,24 @@ var rows=document.getElementById("rows")
 best.innerHTML=""
 if(rows) rows.innerHTML=""
 
+var now=new Date()
+
 for(var d=0;d<7;d++){
 
-var start=d*24
+var daySlots=[]
 
-var bestScore=-1
-var bestSlot=null
+for(var i=d*24;i<d*24+24;i+=2){
 
-for(var i=start;i<start+24;i+=2){
+var start=new Date(time[i])
+var end=new Date(time[i+1]||time[i])
+end.setHours(end.getHours()+1)
+
+if(start<now)continue
+
+var totalMinutes=start.getHours()*60+start.getMinutes()
+if(interval){
+if(totalMinutes<interval.start||totalMinutes>=interval.end)continue
+}
 
 var temp=(temps[i]+temps[i+1])/2
 var r=(rain[i]+rain[i+1])/2
@@ -823,39 +845,45 @@ var w=(wind[i]+wind[i+1])/2
 
 var s=score(temp,r,w)
 
-if(s>bestScore){
-
-bestScore=s
-bestSlot=i
+daySlots.push({
+start:start,
+end:end,
+score:s,
+temp:temp,
+rain:r,
+wind:w
+})
 
 }
 
-}
+if(!daySlots.length)continue
 
-if(bestSlot===null) continue
+daySlots.sort(function(a,b){return b.score-a.score})
 
-var date=new Date(time[bestSlot])
+var top=daySlots.slice(0,3)
+
+top.forEach(function(slot){
 
 var div=document.createElement("div")
-
 div.className="best-slot"
 
-var h=date.getHours()
-var hEnd=(h+2)%24
-var icon=scoreIcon(bestScore)
-var label=scoreLabel(bestScore)
+var icon=scoreIcon(slot.score)
+var label=scoreLabel(slot.score)
 
 div.innerHTML=
 
 "<div>"+
-icon+" "+String(h).padStart(2,"0")+"-"+String(hEnd).padStart(2,"0")+
+icon+" "+slot.start.toLocaleDateString("it-IT")+" "+
+String(slot.start.getHours()).padStart(2,"0")+":00-"+String(slot.end.getHours()).padStart(2,"0")+":00"+
 "</div>"+
 "<div>"+
 label+"<br>"+
-"Score "+bestScore+
+"Score "+slot.score+
 "</div>"
 
 best.appendChild(div)
+
+})
 
 }
 
@@ -895,13 +923,34 @@ document.getElementById("status").innerText="Carica prima il meteo."
 return
 }
 
+var interval=getTimePreferenceInterval()
+
+if(!interval){
+document.getElementById("status").innerText="Intervallo orario non valido."
+return
+}
+
+var tabToday=document.getElementById("tabToday")
+var tab7d=document.getElementById("tab7d")
+
+if(tab7d && tab7d.classList.contains("active")){
+
+weather7days(lastWeatherData,interval)
+
+}else{
+
+generateSlots(lastWeatherData,interval)
+
+}
+
+}
+
+function getTimePreferenceInterval(){
+
 var startInput=document.getElementById("prefTimeStart")
 var endInput=document.getElementById("prefTimeEnd")
 
-if(!startInput||!endInput||!startInput.value||!endInput.value){
-document.getElementById("status").innerText="Scegli un orario di inizio e fine."
-return
-}
+if(!startInput||!endInput||!startInput.value||!endInput.value)return null
 
 var pStart=startInput.value.split(":")
 var pEnd=endInput.value.split(":")
@@ -909,91 +958,9 @@ var pEnd=endInput.value.split(":")
 var startMinutes=parseInt(pStart[0],10)*60+parseInt(pStart[1]||"0",10)
 var endMinutes=parseInt(pEnd[0],10)*60+parseInt(pEnd[1]||"0",10)
 
-if(isNaN(startMinutes)||isNaN(endMinutes)||endMinutes<=startMinutes){
-document.getElementById("status").innerText="Intervallo orario non valido."
-return
-}
+if(isNaN(startMinutes)||isNaN(endMinutes)||endMinutes<=startMinutes)return null
 
-var temps=lastWeatherData.hourly.temperature_2m
-var rain=lastWeatherData.hourly.precipitation
-var wind=lastWeatherData.hourly.windspeed_10m
-var time=lastWeatherData.hourly.time
-
-var best=document.getElementById("best")
-var rows=document.getElementById("rows")
-
-best.innerHTML=""
-if(rows) rows.innerHTML=""
-
-var foundAny=false
-
-for(var d=0;d<7;d++){
-
-var dayBestScore=-1
-var dayBestIndex=null
-
-for(var i=d*24;i<d*24+24-1;i++){
-
-var slotStart=new Date(time[i])
-var totalMinutes=slotStart.getHours()*60+slotStart.getMinutes()
-
-if(totalMinutes<startMinutes||totalMinutes>=endMinutes)continue
-
-var temp=temps[i]
-var r=rain[i]
-var w=wind[i]
-
-var base=score(temp,r,w)
-var s=preferenceAdjustedScore(base,temp,r,w)
-
-if(s>dayBestScore){
-dayBestScore=s
-dayBestIndex=i
-}
-
-}
-
-if(dayBestIndex===null)continue
-
-foundAny=true
-
-var start=new Date(time[dayBestIndex])
-var end=new Date(start)
-end.setHours(end.getHours()+1)
-
-var div=document.createElement("div")
-
-div.className="best-slot"
-
-var temp=temps[dayBestIndex]
-var r=rain[dayBestIndex]
-var w=wind[dayBestIndex]
-
-div.innerHTML=
-
-"<div>"+
-"<strong>"+start.toLocaleDateString("it-IT")+"</strong><br>"+
-"Orario "+String(start.getHours()).padStart(2,"0")+":00<br>"+
-"Temp "+temp.toFixed(1)+"°C<br>"+
-"Pioggia "+r.toFixed(1)+" mm<br>"+
-"Vento "+w.toFixed(1)+" km/h<br>"+
-"Score "+dayBestScore+
-"</div>"+
-"<div><button class='slot-btn' onclick='addBestSlotToPlan(\""+start.toISOString()+"\",\""+end.toISOString()+"\")'>+</button></div>"
-
-best.appendChild(div)
-
-}
-
-if(!foundAny){
-
-document.getElementById("status").innerText="Nessun orario trovato in questo intervallo."
-
-}else{
-
-document.getElementById("status").innerText="Migliori giorni per l'intervallo orario scelto aggiornati"
-
-}
+return{start:startMinutes,end:endMinutes}
 
 }
 
