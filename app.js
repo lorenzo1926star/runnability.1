@@ -526,12 +526,14 @@ localStorage.setItem("runplans",JSON.stringify(plans))
 function renderRunPlan(){
 
 var table=document.getElementById("runplan")
+var planner=document.getElementById("plannerUI")
 
 if(!table)return
 
 var plans=JSON.parse(localStorage.getItem("runplans")||"[]")
 
 table.innerHTML=""
+if(planner) planner.innerHTML=""
 
 plans.forEach(p=>{
 
