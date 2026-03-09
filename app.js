@@ -742,7 +742,6 @@ updateNextRunWidgets()
 
 /* ===== SLOT METEO 2 ORE ===== */
 
-function generateSlots(data){
 function generateSlots(data,interval){
 
 var temps=data.hourly.temperature_2m
