@@ -748,6 +748,8 @@ var rows=document.getElementById("rows")
 best.innerHTML=""
 if(rows) rows.innerHTML=""
 
+var foundAny=false
+
 for(var d=0;d<7;d++){
 
 var dayBestScore=-1
@@ -776,6 +778,8 @@ dayBestIndex=i
 
 if(dayBestIndex===null)continue
 
+foundAny=true
+
 var start=new Date(time[dayBestIndex])
 var end=new Date(start)
 end.setHours(end.getHours()+1)
@@ -797,7 +801,15 @@ best.appendChild(div)
 
 }
 
+if(!foundAny){
+
+document.getElementById("status").innerText="Nessun orario trovato in questo intervallo."
+
+}else{
+
 document.getElementById("status").innerText="Migliori giorni per l'intervallo orario scelto aggiornati"
+
+}
 
 }
 
