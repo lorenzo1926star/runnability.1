@@ -790,11 +790,18 @@ var div=document.createElement("div")
 
 div.className="best-slot"
 
+var temp=temps[dayBestIndex]
+var r=rain[dayBestIndex]
+var w=wind[dayBestIndex]
+
 div.innerHTML=
 
 "<div>"+
 "<strong>"+start.toLocaleDateString("it-IT")+"</strong><br>"+
 "Orario "+String(start.getHours()).padStart(2,"0")+":00<br>"+
+"Temp "+temp.toFixed(1)+"°C<br>"+
+"Pioggia "+r.toFixed(1)+" mm<br>"+
+"Vento "+w.toFixed(1)+" km/h<br>"+
 "Score "+dayBestScore+
 "</div>"+
 "<div><button class='slot-btn' onclick='addBestSlotToPlan(\""+start.toISOString()+"\",\""+end.toISOString()+"\")'>+</button></div>"
