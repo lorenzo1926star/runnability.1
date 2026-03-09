@@ -196,3 +196,18 @@ align-items:center;
 .slot-card.green{background:#064e3b;}
 .slot-card.orange{background:#78350f;}
 .slot-card.red{background:#7f1d1d;}
+
+.week-day{
+padding:8px 0;
+border-bottom:1px solid rgba(255,255,255,0.06);
+}
+
+.week-day-name{
+font-weight:bold;
+margin-bottom:2px;
+}
+
+.week-day-detail{
+font-size:13px;
+opacity:0.8;
+}

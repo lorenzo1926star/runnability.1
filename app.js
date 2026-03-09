@@ -688,20 +688,52 @@ tr.innerHTML=
 
 table.appendChild(tr)
 
+})
+
 if(planner){
 
-var item=document.createElement("div")
+var weekdayNames=["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"]
 
-item.textContent=
-new Date(p.start).toLocaleDateString("it-IT")+
-" "+String(new Date(p.start).getHours()).padStart(2,"0")+":00 - "+
-workout
+var today=new Date()
+for(var i=0;i<7;i++){
 
-planner.appendChild(item)
+var d=new Date(today.getFullYear(),today.getMonth(),today.getDate()+i)
+var key=d.toISOString().substring(0,10)
+
+var dayPlans=plans.filter(function(p){
+return p.date===key
+})
+
+var dayDiv=document.createElement("div")
+dayDiv.className="week-day"
+
+var nameDiv=document.createElement("div")
+nameDiv.className="week-day-name"
+nameDiv.textContent=weekdayNames[d.getDay()]
+
+var detailDiv=document.createElement("div")
+detailDiv.className="week-day-detail"
+
+if(dayPlans.length){
+
+var p=dayPlans[0]
+var start=new Date(p.start)
+var timeStr=String(start.getHours()).padStart(2,"0")+":00"
+detailDiv.textContent=(p.workout||"Corsa Lenta")+" – "+timeStr
+
+}else{
+
+detailDiv.textContent="Riposo"
 
 }
 
-})
+dayDiv.appendChild(nameDiv)
+dayDiv.appendChild(detailDiv)
+planner.appendChild(dayDiv)
+
+}
+
+}
 
 updateNextRunWidgets()
 
