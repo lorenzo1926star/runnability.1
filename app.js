@@ -1,4 +1,4 @@
-﻿
+
 /* SOSTITUISCI COMPLETAMENTE TUTTO IL CONTENUTO DI app.js CON QUESTO */
 
 function showSection(id) {
@@ -157,7 +157,34 @@ list.appendChild(div)
 
 }
 
+/* ---------- DASHBOARD KPI ---------- */
+
+function updateDashboard(){
+
+var runs=JSON.parse(localStorage.getItem("runs")||"[]")
+
+var totalRuns=runs.length
+var totalKm=0
+
+runs.forEach(function(r){
+totalKm+=r.distance||0
+})
+
+var totalKcal=totalKm*60
+
+var elRuns=document.getElementById("kpiRuns")
+var elKm=document.getElementById("kpiKm")
+var elKcal=document.getElementById("kpiKcal")
+
+if(elRuns) elRuns.textContent=totalRuns
+if(elKm) elKm.textContent=totalKm.toFixed(1)
+if(elKcal) elKcal.textContent=Math.round(totalKcal)
+
+}
+
 /* ---------- METEO ---------- */
+
+var lastWeatherData=null
 
 function score(temp,rain,wind){
 
@@ -226,153 +253,22 @@ fetch("https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lon+"
 
 .then(function(data){
 
-var temps=data.hourly.temperature_2m
-var rain=data.hourly.precipitation
-var wind=data.hourly.windspeed_10m
-var time=data.hourly.time
+lastWeatherData=data
 
-var rows=document.getElementById("rows")
-var best=document.getElementById("best")
+var tab7d=document.getElementById("tab7d")
+var tabToday=document.getElementById("tabToday")
 
-rows.innerHTML=""
-best.innerHTML=""
+if(tab7d && tab7d.classList.contains("active")){
 
-var arr=[]
+weather7days(data)
 
-/* ===== DETTAGLIO 2 ORE ===== */
+}else{
 
-for(var i=0;i<48;i+=2){
-
-var avgTemp=(temps[i]+temps[i+1])/2
-var avgRain=(rain[i]+rain[i+1])/2
-var avgWind=(wind[i]+wind[i+1])/2
-
-var s=score(avgTemp,avgRain,avgWind)
-
-var date=new Date(time[i])
-
-arr.push({
-date:date,
-score:s,
-temp:avgTemp,
-rain:avgRain,
-wind:avgWind
-})
-
-var tr=document.createElement("tr")
-
-tr.innerHTML=
-
-"<td>"+date.toLocaleDateString("it-IT")+" "+date.getHours()+":00</td>"+
-"<td>"+s+"</td>"+
-"<td>"+avgTemp.toFixed(1)+"°C</td>"+
-"<td>"+avgRain.toFixed(1)+" mm</td>"+
-"<td>"+avgWind.toFixed(1)+" km/h</td>"
-
-rows.appendChild(tr)
-
-}
-
-/* ===== MIGLIORI 3 FASCE ===== */
-
-arr.sort(function(a,b){
-return b.score-a.score
-})
-
-for(var j=0;j<3;j++){
-
-var w=arr[j]
-
-var div=document.createElement("div")
-
-div.className="card"
-
-div.innerHTML=
-
-"<strong>"+(j+1)+") "+w.date.toLocaleDateString("it-IT")+" "+w.date.getHours()+":00</strong><br>"+
-"Temp "+w.temp.toFixed(1)+"°C<br>"+
-"Pioggia "+w.rain.toFixed(1)+"<br>"+
-"Vento "+w.wind.toFixed(1)+"<br>"+
-"Score "+w.score
-
-best.appendChild(div)
+generateSlots(data)
 
 }
 
 document.getElementById("status").innerText="Meteo aggiornato"
-
-})
-
-}
-
-/* =====================================================
-AGGIUNGI QUESTA FUNZIONE SOTTO loadWeather
-TAB PREVISIONI 7 GIORNI
-===================================================== */
-
-function weather7days(lat,lon){
-
-fetch("https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lon+"&hourly=temperature_2m,precipitation,windspeed_10m&forecast_days=7&timezone=auto")
-
-.then(r=>r.json())
-
-.then(function(data){
-
-var temps=data.hourly.temperature_2m
-var rain=data.hourly.precipitation
-var wind=data.hourly.windspeed_10m
-var time=data.hourly.time
-
-var best=document.getElementById("best")
-
-best.innerHTML=""
-
-for(var d=0; d<7; d++){
-
-var start=d*24
-
-var daily=[]
-
-for(var i=start;i<start+24;i+=2){
-
-var avgTemp=(temps[i]+temps[i+1])/2
-var avgRain=(rain[i]+rain[i+1])/2
-var avgWind=(wind[i]+wind[i+1])/2
-
-var s=score(avgTemp,avgRain,avgWind)
-
-daily.push({
-time:time[i],
-score:s,
-temp:avgTemp,
-rain:avgRain,
-wind:avgWind
-})
-
-}
-
-daily.sort(function(a,b){
-return b.score-a.score
-})
-
-var bestSlot=daily[0]
-
-var date=new Date(bestSlot.time)
-
-var div=document.createElement("div")
-
-div.className="card"
-
-div.innerHTML=
-
-"<strong>"+date.toLocaleDateString("it-IT")+"</strong><br>"+
-"Miglior fascia: "+date.getHours()+":00<br>"+
-"Temp "+bestSlot.temp.toFixed(1)+"°C<br>"+
-"Score "+bestSlot.score
-
-best.appendChild(div)
-
-}
 
 })
 
@@ -428,6 +324,40 @@ document.addEventListener("DOMContentLoaded",function(){
 
 initMap()
 renderHistory()
+updateDashboard()
+
+var tabToday=document.getElementById("tabToday")
+var tab7d=document.getElementById("tab7d")
+
+if(tabToday && tab7d){
+
+tabToday.addEventListener("click",function(){
+
+tabToday.classList.add("active")
+tab7d.classList.remove("active")
+
+if(lastWeatherData){
+generateSlots(lastWeatherData)
+}else{
+document.getElementById("status").innerText="Carica prima il meteo."
+}
+
+})
+
+tab7d.addEventListener("click",function(){
+
+tab7d.classList.add("active")
+tabToday.classList.remove("active")
+
+if(lastWeatherData){
+weather7days(lastWeatherData)
+}else{
+document.getElementById("status").innerText="Carica prima il meteo."
+}
+
+})
+
+}
 
 showSection("dashboard")
 
@@ -455,12 +385,90 @@ AGGIUNGERE ALLA FINE DI app.js
 document.addEventListener("DOMContentLoaded",function(){
 
 renderRunPlan()
+updateDashboard()
+scheduleRunNotifications()
 
 })
 
 /* AGGIUNGI QUESTO BLOCCO IN FONDO A app.js */
 
 /* ===== RUN PLAN ===== */
+
+var runPlanTimers=[]
+
+function clearRunPlanTimers(){
+
+runPlanTimers.forEach(function(t){clearTimeout(t)})
+runPlanTimers=[]
+
+}
+
+function showRunNotification(plan){
+
+var start=new Date(plan.start)
+var timeStr=String(start.getHours()).padStart(2,"0")+":00"
+var msg="Tra "+plan.notify+" minuti: "+plan.workout+" alle "+timeStr
+
+if("Notification" in window && Notification.permission==="granted"){
+
+new Notification("RunTrack Pro — Allenamento",{
+body:msg
+})
+
+}else{
+
+alert(msg)
+
+}
+
+}
+
+function scheduleRunNotifications(){
+
+clearRunPlanTimers()
+
+if(!("Notification" in window)) return
+
+var plans=JSON.parse(localStorage.getItem("runplans")||"[]")
+var now=Date.now()
+
+function scheduleForPlans(){
+
+plans.forEach(function(p){
+
+var startTime=new Date(p.start).getTime()
+var notifyMinutes=parseInt(p.notify,10)||0
+var notifyTime=startTime-notifyMinutes*60000
+
+var diff=notifyTime-now
+
+if(diff<=0) return
+
+var t=setTimeout(function(){
+showRunNotification(p)
+},diff)
+
+runPlanTimers.push(t)
+
+})
+
+}
+
+if(Notification.permission==="granted"){
+
+scheduleForPlans()
+
+}else if(Notification.permission==="default"){
+
+Notification.requestPermission().then(function(res){
+if(res==="granted"){
+scheduleForPlans()
+}
+})
+
+}
+
+}
 
 function addBestSlotToPlan(start,end){
 
@@ -475,13 +483,14 @@ id:Date.now(),
 date:date,
 start:start,
 end:end,
-workout:"Corsa lenta",
+workout:"Corsa Lenta",
 notify:document.getElementById("notifyPref").value
 })
 
 localStorage.setItem("runplans",JSON.stringify(plans))
 
 renderRunPlan()
+scheduleRunNotifications()
 
 }
 
@@ -494,6 +503,7 @@ plans=plans.filter(p=>p.id!=id)
 localStorage.setItem("runplans",JSON.stringify(plans))
 
 renderRunPlan()
+scheduleRunNotifications()
 
 }
 
@@ -526,16 +536,18 @@ var e=new Date(p.end)
 
 var tr=document.createElement("tr")
 
+var workout=p.workout||"Corsa Lenta"
+
 tr.innerHTML=
 
 "<td>"+s.toLocaleDateString("it-IT")+"</td>"+
 "<td>"+String(s.getHours()).padStart(2,"0")+":00-"+String(e.getHours()).padStart(2,"0")+":00</td>"+
 "<td><select class='plan-select' onchange='updateWorkout("+p.id+",this.value)'>"+
-"<option>Corsa lenta</option>"+
-"<option>Ripetute</option>"+
-"<option>Corsa libera</option>"+
-"<option>Intervalli</option>"+
-"<option>VO2 Max</option>"+
+"<option"+(workout==="Corsa Lenta"?" selected":"")+">Corsa Lenta</option>"+
+"<option"+(workout==="Ripetute"?" selected":"")+">Ripetute</option>"+
+"<option"+(workout==="Intervalli"?" selected":"")+">Intervalli</option>"+
+"<option"+(workout==="Corsa Libera"?" selected":"")+">Corsa Libera</option>"+
+"<option"+(workout==="Sprint"?" selected":"")+">Sprint</option>"+
 "</select></td>"+
 "<td>"+p.notify+" min</td>"+
 "<td><button class='plan-remove' onclick='removeRunPlan("+p.id+")'>X</button></td>"
