@@ -165,9 +165,25 @@ var runs=JSON.parse(localStorage.getItem("runs")||"[]")
 
 var totalRuns=runs.length
 var totalKm=0
+var weekKm=0
+var weekSec=0
+
+var today=new Date()
+var day=today.getDay()
+var diffToMonday=(day+6)%7
+var startWeek=new Date(today.getFullYear(),today.getMonth(),today.getDate())
+startWeek.setDate(startWeek.getDate()-diffToMonday)
+var endWeek=new Date(startWeek.getTime()+7*24*60*60*1000)
 
 runs.forEach(function(r){
 totalKm+=r.distance||0
+
+var d=new Date(r.date)
+if(d>=startWeek && d<endWeek){
+weekKm+=r.distance||0
+weekSec+=r.time||0
+}
+
 })
 
 var totalKcal=totalKm*60
@@ -175,10 +191,16 @@ var totalKcal=totalKm*60
 var elRuns=document.getElementById("kpiRuns")
 var elKm=document.getElementById("kpiKm")
 var elKcal=document.getElementById("kpiKcal")
+var elWeekKm=document.getElementById("kpiWeekKm")
+var elWeekTime=document.getElementById("kpiWeekTime")
 
 if(elRuns) elRuns.textContent=totalRuns
 if(elKm) elKm.textContent=totalKm.toFixed(1)
 if(elKcal) elKcal.textContent=Math.round(totalKcal)
+if(elWeekKm) elWeekKm.textContent=weekKm.toFixed(1)
+if(elWeekTime) elWeekTime.textContent=Math.round(weekSec/60)+" min"
+
+updateNextRunWidgets()
 
 }
 
@@ -474,6 +496,96 @@ scheduleForPlans()
 
 }
 
+function updateNextRunWidgets(){
+
+var nextRunEl=document.getElementById("nextRun")
+var nextWeatherEl=document.getElementById("nextRunWeather")
+
+if(!nextRunEl || !nextWeatherEl) return
+
+var plans=JSON.parse(localStorage.getItem("runplans")||"[]")
+if(!plans.length){
+nextRunEl.innerText="Nessun allenamento pianificato."
+nextWeatherEl.innerText="Carica un piano in Run Plan per vedere il meteo."
+return
+}
+
+var now=Date.now()
+var future=plans.filter(function(p){
+return new Date(p.start).getTime()>now
+})
+
+if(!future.length){
+nextRunEl.innerText="Nessun allenamento futuro."
+nextWeatherEl.innerText="—"
+return
+}
+
+future.sort(function(a,b){
+return new Date(a.start)-new Date(b.start)
+})
+
+var n=future[0]
+var s=new Date(n.start)
+var e=new Date(n.end)
+
+var dateStr=s.toLocaleDateString("it-IT")
+var timeStr=String(s.getHours()).padStart(2,"0")+":00-"+String(e.getHours()).padStart(2,"0")+":00"
+
+nextRunEl.innerHTML=
+dateStr+"<br>"+
+timeStr+"<br>"+
+(n.workout||"Corsa Lenta")+"<br>"+
+"Notifica "+(n.notify||"0")+" min prima"
+
+if(!lastWeatherData){
+nextWeatherEl.innerText="Apri Meteo Pro e carica il meteo per vedere le condizioni."
+return
+}
+
+var temps=lastWeatherData.hourly.temperature_2m
+var rain=lastWeatherData.hourly.precipitation
+var wind=lastWeatherData.hourly.windspeed_10m
+var time=lastWeatherData.hourly.time
+
+if(!temps||!rain||!wind||!time||!time.length){
+nextWeatherEl.innerText="Dati meteo non disponibili."
+return
+}
+
+var runStartMs=s.getTime()
+var bestIdx=-1
+var bestDiff=Infinity
+
+for(var i=0;i<time.length;i++){
+var tMs=new Date(time[i]).getTime()
+var diff=Math.abs(tMs-runStartMs)
+if(diff<bestDiff){
+bestDiff=diff
+bestIdx=i
+}
+}
+
+if(bestIdx<0){
+nextWeatherEl.innerText="Dati meteo non trovati per questo orario."
+return
+}
+
+var temp=temps[bestIdx]
+var r=rain[bestIdx]
+var w=wind[bestIdx]
+
+var base=score(temp,r,w)
+var adj=preferenceAdjustedScore(base,temp,r,w)
+
+nextWeatherEl.innerHTML=
+"Temp "+temp.toFixed(1)+"°C<br>"+
+"Pioggia "+r.toFixed(1)+" mm<br>"+
+"Vento "+w.toFixed(1)+" km/h<br>"+
+"Score "+adj
+
+}
+
 function addBestSlotToPlan(start,end){
 
 var plans=JSON.parse(localStorage.getItem("runplans")||"[]")
@@ -574,6 +686,8 @@ planner.appendChild(item)
 }
 
 })
+
+updateNextRunWidgets()
 
 }
 

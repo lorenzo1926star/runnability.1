@@ -1,4 +1,4 @@
-﻿body{
+body{
 margin:0;
 font-family:Arial;
 background:#0f172a;
@@ -55,6 +55,11 @@ background:#111827;
 padding:10px;
 border-radius:10px;
 flex:1;
+}
+
+.btn-full{
+width:100%;
+margin-top:10px;
 }
 
 #mapid{
