@@ -182,3 +182,17 @@ border-radius:10px;
 .score-ok{color:#22c55e;font-weight:bold}
 .score-warn{color:#f59e0b;font-weight:bold}
 .score-bad{color:#ef4444;font-weight:bold}
+
+.slot-card{
+padding:10px;
+margin-bottom:10px;
+border-radius:10px;
+background:#111827;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.slot-card.green{background:#064e3b;}
+.slot-card.orange{background:#78350f;}
+.slot-card.red{background:#7f1d1d;}

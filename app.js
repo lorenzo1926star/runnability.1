@@ -736,19 +736,26 @@ var w=(wind[i]+wind[i+1])/2
 
 var s=score(temp,r,w)
 
-var tr=document.createElement("tr")
+var card=document.createElement("div")
 
-tr.innerHTML=
+card.className="slot-card "+scoreClass(s)
 
-"<td>"+start.toLocaleDateString("it-IT")+"</td>"+
-"<td>"+String(start.getHours()).padStart(2,"0")+":00-"+String(end.getHours()).padStart(2,"0")+":00</td>"+
-"<td>"+s+"</td>"+
-"<td>"+temp.toFixed(1)+"°C</td>"+
-"<td>"+r.toFixed(1)+" mm</td>"+
-"<td>"+w.toFixed(1)+" km/h</td>"+
-"<td><button class='slot-btn' onclick='addBestSlotToPlan(\""+start.toISOString()+"\",\""+end.toISOString()+"\")'>+</button></td>"
+card.innerHTML=
 
-rows.appendChild(tr)
+"<div>"+
+start.toLocaleDateString("it-IT")+"<br>"+
+String(start.getHours()).padStart(2,"0")+":00-"+String(end.getHours()).padStart(2,"0")+":00<br>"+
+"Temp "+temp.toFixed(1)+"°C · "+
+"Pioggia "+r.toFixed(1)+" mm · "+
+"Vento "+w.toFixed(1)+" km/h"+
+"</div>"+
+"<div>"+
+scoreLabel(s)+"<br>"+
+"Score "+s+"<br>"+
+"<button class='slot-btn' onclick='addBestSlotToPlan(\""+start.toISOString()+"\",\""+end.toISOString()+"\")'>+</button>"+
+"</div>"
+
+rows.appendChild(card)
 
 }
 
