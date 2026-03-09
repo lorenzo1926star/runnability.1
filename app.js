@@ -296,12 +296,14 @@ renderRunPlan()
 function renderRunPlan(){
 
 var table=document.getElementById("runplan")
+var planner=document.getElementById("plannerUI")
 
 if(!table)return
 
 var plans=JSON.parse(localStorage.getItem("runplans")||"[]")
 
 table.innerHTML=""
+if(planner) planner.innerHTML=""
 
 plans.forEach(function(p){
 
@@ -375,6 +377,8 @@ pos.coords.longitude
 })
 
 })
+
+document.getElementById("btnTime")?.addEventListener("click",findBestAtTime)
 
 })
 
@@ -554,6 +558,19 @@ tr.innerHTML=
 
 table.appendChild(tr)
 
+if(planner){
+
+var item=document.createElement("div")
+
+item.textContent=
+new Date(p.start).toLocaleDateString("it-IT")+
+" "+String(new Date(p.start).getHours()).padStart(2,"0")+":00 - "+
+workout
+
+planner.appendChild(item)
+
+}
+
 })
 
 }
@@ -664,6 +681,123 @@ String(date.getHours()).padStart(2,"0")+":00"+
 best.appendChild(div)
 
 }
+
+}
+
+function preferenceAdjustedScore(base,temp,rain,wind){
+
+var pref=document.getElementById("pref")?.value||"balanced"
+var s=base
+
+if(pref==="cool"){
+if(temp>20)s-=10
+if(temp>26)s-=10
+}
+
+if(pref==="warm"){
+if(temp<10)s-=10
+}
+
+if(pref==="no_rain"){
+s-=rain*10
+}
+
+if(pref==="low_wind"){
+s-=wind*2
+}
+
+if(s<0)s=0
+return Math.round(s)
+
+}
+
+function findBestAtTime(){
+
+if(!lastWeatherData){
+document.getElementById("status").innerText="Carica prima il meteo."
+return
+}
+
+var startInput=document.getElementById("prefTimeStart")
+var endInput=document.getElementById("prefTimeEnd")
+
+if(!startInput||!endInput||!startInput.value||!endInput.value){
+document.getElementById("status").innerText="Scegli un orario di inizio e fine."
+return
+}
+
+var pStart=startInput.value.split(":")
+var pEnd=endInput.value.split(":")
+
+var startMinutes=parseInt(pStart[0],10)*60+parseInt(pStart[1]||"0",10)
+var endMinutes=parseInt(pEnd[0],10)*60+parseInt(pEnd[1]||"0",10)
+
+if(isNaN(startMinutes)||isNaN(endMinutes)||endMinutes<=startMinutes){
+document.getElementById("status").innerText="Intervallo orario non valido."
+return
+}
+
+var temps=lastWeatherData.hourly.temperature_2m
+var rain=lastWeatherData.hourly.precipitation
+var wind=lastWeatherData.hourly.windspeed_10m
+var time=lastWeatherData.hourly.time
+
+var best=document.getElementById("best")
+var rows=document.getElementById("rows")
+
+best.innerHTML=""
+if(rows) rows.innerHTML=""
+
+for(var d=0;d<7;d++){
+
+var dayBestScore=-1
+var dayBestIndex=null
+
+for(var i=d*24;i<d*24+24-1;i++){
+
+var slotStart=new Date(time[i])
+var totalMinutes=slotStart.getHours()*60+slotStart.getMinutes()
+
+if(totalMinutes<startMinutes||totalMinutes>=endMinutes)continue
+
+var temp=temps[i]
+var r=rain[i]
+var w=wind[i]
+
+var base=score(temp,r,w)
+var s=preferenceAdjustedScore(base,temp,r,w)
+
+if(s>dayBestScore){
+dayBestScore=s
+dayBestIndex=i
+}
+
+}
+
+if(dayBestIndex===null)continue
+
+var start=new Date(time[dayBestIndex])
+var end=new Date(start)
+end.setHours(end.getHours()+1)
+
+var div=document.createElement("div")
+
+div.className="best-slot"
+
+div.innerHTML=
+
+"<div>"+
+"<strong>"+start.toLocaleDateString("it-IT")+"</strong><br>"+
+"Orario "+String(start.getHours()).padStart(2,"0")+":00<br>"+
+"Score "+dayBestScore+
+"</div>"+
+"<div><button class='slot-btn' onclick='addBestSlotToPlan(\""+start.toISOString()+"\",\""+end.toISOString()+"\")'>+</button></div>"
+
+best.appendChild(div)
+
+}
+
+document.getElementById("status").innerText="Migliori giorni per l'intervallo orario scelto aggiornati"
 
 }
 
