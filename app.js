@@ -615,14 +615,16 @@ var wind=data.hourly.windspeed_10m
 var time=data.hourly.time
 
 var best=document.getElementById("best")
+var rows=document.getElementById("rows")
 
 best.innerHTML=""
+if(rows) rows.innerHTML=""
 
 for(var d=0;d<7;d++){
 
 var start=d*24
 
-var bestScore=0
+var bestScore=-1
 var bestSlot=null
 
 for(var i=start;i<start+24;i+=2){
@@ -641,6 +643,8 @@ bestSlot=i
 }
 
 }
+
+if(bestSlot===null) continue
 
 var date=new Date(time[bestSlot])
 
