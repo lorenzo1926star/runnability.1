@@ -232,6 +232,22 @@ return "red"
 
 }
 
+function scoreIcon(s){
+
+if(s>=85) return "☀️"
+if(s>=65) return "🌤"
+return "🌧"
+
+}
+
+function scoreLabel(s){
+
+if(s>=85) return "Perfetto per correre"
+if(s>=65) return "Buono"
+return "Sconsigliato"
+
+}
+
 function searchCity(){
 
 var city=document.getElementById("city").value
@@ -785,14 +801,20 @@ var div=document.createElement("div")
 
 div.className="best-slot"
 
+var h=date.getHours()
+var hEnd=(h+2)%24
+var icon=scoreIcon(bestScore)
+var label=scoreLabel(bestScore)
+
 div.innerHTML=
 
 "<div>"+
-"<strong>"+date.toLocaleDateString("it-IT")+"</strong><br>"+
-"Miglior fascia "+
-String(date.getHours()).padStart(2,"0")+":00"+
+icon+" "+String(h).padStart(2,"0")+"-"+String(hEnd).padStart(2,"0")+
 "</div>"+
-"<div class='score-ok'>"+bestScore+"</div>"
+"<div>"+
+label+"<br>"+
+"Score "+bestScore+
+"</div>"
 
 best.appendChild(div)
 
